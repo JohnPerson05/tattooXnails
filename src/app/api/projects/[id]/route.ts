@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql, hasDatabase } from "@/server/db";
 import { verifyAdmin } from "@/server/auth";
 import { mapProject } from "@/server/mappers";
+import { jsonNoStore } from "@/server/http";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,10 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
 
   try {
     await sql`DELETE FROM projects WHERE id = ${params.id}`;
-    return new NextResponse(null, { status: 204 });
+    return new NextResponse(null, {
+      status: 204,
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
