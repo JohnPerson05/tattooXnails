@@ -21,6 +21,7 @@ export class ApiAdapter implements DataAdapter {
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await fetch(`/api${path}`, {
       ...init,
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(),

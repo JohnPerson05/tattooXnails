@@ -8,6 +8,7 @@
 //     the image as a data URL so local dev still works.
 import { useRef, useState } from "react";
 import { ImagePlus, Link2, Loader2, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   value: string;
@@ -16,6 +17,11 @@ interface Props {
 }
 
 const TOKEN_KEY = "owshie-celeste-admin-token";
+
+// Vercel serverless functions reject request bodies > 4.5 MB. A data URL is
+// base64 (~33% larger than the file), so without Blob storage we cap the inline
+// fallback well under that to avoid silent save failures.
+const MAX_INLINE_BYTES = 3 * 1024 * 1024; // 3 MB original file
 
 const ImageInput = ({ value, onChange, label = "Image" }: Props) => {
   const [mode, setMode] = useState<"upload" | "url">("upload");
@@ -40,15 +46,28 @@ const ImageInput = ({ value, onChange, label = "Image" }: Props) => {
       });
 
       if (res.ok) {
+        // Stored in Vercel Blob — only the short URL is saved.
         const { url } = (await res.json()) as { url: string };
         onChange(url);
         return;
       }
 
-      // 501 = Blob not configured -> fall back to inline data URL.
+      // Blob not configured (501) -> fall back to inlining as a data URL.
+      // Guard the size: oversized data URLs blow past Vercel's 4.5 MB body limit
+      // and cause silent save failures.
+      if (file.size > MAX_INLINE_BYTES) {
+        toast.error(
+          "Image is too large to store without Blob storage. Use an image under 3 MB, or paste a hosted image URL instead.",
+        );
+        return;
+      }
       const dataUrl = await readAsDataUrl(file);
       onChange(dataUrl);
     } catch {
+      if (file.size > MAX_INLINE_BYTES) {
+        toast.error("Upload failed and the image is too large to inline. Paste a hosted URL instead.");
+        return;
+      }
       const dataUrl = await readAsDataUrl(file);
       onChange(dataUrl);
     } finally {

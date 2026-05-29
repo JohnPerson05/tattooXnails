@@ -82,8 +82,10 @@ const AdminProjectEdit = ({ id }: { id?: string }) => {
         toast.success("Project updated");
       }
       router.push("/admin/projects");
-    } catch {
-      toast.error("Failed to save project");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to save project";
+      toast.error(message);
+      console.error("[AdminProjectEdit] save failed:", err);
     } finally {
       setSaving(false);
     }
@@ -182,15 +184,15 @@ const AdminProjectEdit = ({ id }: { id?: string }) => {
           <div className="glass-card p-6 space-y-5">
             <h2 className="font-display text-lg tracking-wider text-foreground">Social & Video</h2>
             <div>
-              <label className={labelCls}>TikTok URL</label>
+              <label className={labelCls}>Video URL (TikTok or YouTube)</label>
               <input
                 value={form.tiktokUrl ?? ""}
                 onChange={(e) => set("tiktokUrl", e.target.value)}
-                placeholder="https://www.tiktok.com/@user/video/123..."
+                placeholder="https://tiktok.com/@user/video/... or https://youtu.be/..."
                 className={inputCls}
               />
               <p className="text-[11px] text-muted-foreground mt-1.5">
-                Paste a full TikTok video link — it embeds automatically on the project page.
+                Paste a TikTok or YouTube link — it becomes a playable video on the project page.
               </p>
             </div>
             <div>
