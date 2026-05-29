@@ -1,17 +1,25 @@
 // Neon Postgres client (server-only).
 //
-// On Vercel, add the Neon integration and DATABASE_URL is injected automatically.
-// Locally, set DATABASE_URL in .env.local. This module must never be imported by
-// client components — it holds the secret connection string.
+// On Vercel, the Neon integration injects a connection string. Depending on how
+// it's added, the env var may be named DATABASE_URL, POSTGRES_URL, or
+// DATABASE_URL_UNPOOLED — we accept any of them. Locally, set DATABASE_URL in
+// .env.local. This module must never be imported by client components.
 import { neon } from "@neondatabase/serverless";
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.DATABASE_URL_UNPOOLED ||
+  process.env.POSTGRES_PRISMA_URL ||
+  "";
 
 export const hasDatabase = Boolean(connectionString);
 
 if (!connectionString) {
   console.warn(
-    "[db] DATABASE_URL is not set. On Vercel, add the Neon integration. Locally, set it in .env.local.",
+    "[db] No database connection string found. Expected one of: DATABASE_URL, " +
+      "POSTGRES_URL, DATABASE_URL_UNPOOLED. On Vercel, add the Neon integration " +
+      "and redeploy. Locally, set DATABASE_URL in .env.local.",
   );
 }
 
@@ -23,7 +31,7 @@ type SqlTag = (strings: TemplateStringsArray, ...values: unknown[]) => Promise<a
 const rawSql = connectionString
   ? (neon(connectionString) as unknown as SqlTag)
   : ((() => {
-      throw new Error("DATABASE_URL is not configured");
+      throw new Error("No database connection string configured");
     }) as unknown as SqlTag);
 
 export const sql: SqlTag = rawSql;

@@ -5,6 +5,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
 import PageTransition from "./PageTransition";
+import DataStatusBanner from "./DataStatusBanner";
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
         <main className="flex-1 pt-16 md:pt-20">{children}</main>
         <Footer />
         <ScrollToTop />
+        <DataStatusBanner />
       </div>
     </PageTransition>
   );
